@@ -106,14 +106,6 @@
                             </a>
                         </th>
                         <th class="text-nowrap">
-                            <a href="{{ url_for('user_conduct.user_conduct_list', sort_by='total_points', sort_order='desc' if sort_by == 'total_points' and sort_order == 'asc' else 'asc', date_from=date_from, date_to=date_to, users=selected_users, conducts=selected_conducts, groups=selected_groups, select_all_users=select_all_users, select_all_conducts=select_all_conducts, select_all_groups=select_all_groups) }}">
-                                Điểm ngày
-                                {% if sort_by == 'total_points' %}
-                                    {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
-                                {% endif %}
-                            </a>
-                        </th>
-                        <th class="text-nowrap">
                             <a href="{{ url_for('user_conduct.user_conduct_list', sort_by='entered_by', sort_order='desc' if sort_by == 'entered_by' and sort_order == 'asc' else 'asc', date_from=date_from, date_to=date_to, users=selected_users, conducts=selected_conducts, groups=selected_groups, select_all_users=select_all_users, select_all_conducts=select_all_conducts, select_all_groups=select_all_groups) }}">
                                 Đăng ký bởi
                                 {% if sort_by == 'entered_by' %}
@@ -131,7 +123,6 @@
                             <td>{{ record[2] }}</td>
                             <td>{{ record[6] }}</td>
                             <td>{{ record[3] }}</td>
-                            <td>{{ record[4] }}</td>
                             <td>{{ record[5] }}</td>
                             <td class="text-nowrap">
                                 <a href="{{ url_for('user_conduct.user_conduct_edit', id=record[0], sort_by=sort_by, sort_order=sort_order, date_from=date_from, date_to=date_to, users=selected_users, conducts=selected_conducts, groups=selected_groups, select_all_users=select_all_users, select_all_conducts=select_all_conducts, select_all_groups=select_all_groups) }}" class="btn btn-sm btn-info me-1">Edit</a>

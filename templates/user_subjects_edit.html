@@ -50,19 +50,29 @@
                 <div class="col-12 col-md-4">
                     <div class="form-group">
                         <label for="criteria_points">Điểm kết quả:</label>
-                        <input type="number" name="criteria_points" id="criteria_points" class="form-control" readonly>
+                        <input type="number" name="criteria_points" id="criteria_points" class="form-control" value="{{ record[5] }}" onchange="calculateTotalPoints()">
                     </div>
                     <div class="form-group mt-3">
                         <label for="total_points">Tổng điểm ngày:</label>
-                        <input type="number" name="total_points" id="total_points" class="form-control" value="{{ record[5] }}" readonly>
+                        <input type="number" name="total_points" id="total_points" class="form-control" readonly>
                     </div>
                 </div>
             </div>
             <div class="row mt-4">
                 <div class="col-12 text-center">
-                    <button type="submit" class="btn btn-primary w-100 w-md-auto  mb-2 mr-2">Cập nhật</button>
-                    <a href="{{ url_for('user_subjects.user_subjects_list') }}" class="btn btn-secondary w-100 w-md-auto mb-2 mb-md-0 mr-md-2">Quay về</a>
-
+                    <button type="submit" class="btn btn-primary w-100 w-md-auto mb-2 mr-2">Cập nhật</button>
+                    <a href="{{ url_for('user_subjects.user_subjects_list',
+                                        sort_by=sort_by,
+                                        sort_order=sort_order,
+                                        date_from=date_from,
+                                        date_to=date_to,
+                                        users=selected_users,
+                                        subjects=selected_subjects,
+                                        groups=selected_groups,
+                                        select_all_users=select_all_users,
+                                        select_all_subjects=select_all_subjects,
+                                        select_all_groups=select_all_groups) }}"
+                       class="btn btn-secondary w-100 w-md-auto mb-2 mb-md-0 mr-md-2">Quay về</a>
                 </div>
             </div>
         </form>
@@ -70,23 +80,31 @@
 
     <style>
         @media (max-width: 768px) {
-            .form-group {
-                margin-bottom: 1rem;
-            }
-            .btn {
-                margin-bottom: 0.5rem;
-            }
+            .form-group { margin-bottom: 1rem; }
+            .btn { margin-bottom: 0.5rem; }
         }
     </style>
 
     <script>
+        console.log("Script loaded successfully");
+
         function loadCriteriaPoints() {
+            console.log("loadCriteriaPoints function called");
             const criteriaId = document.getElementById('criteria_id').value;
+            console.log("Selected criteria_id:", criteriaId);
+
             if (criteriaId) {
-                fetch(`/get_criteria_points/${criteriaId}`)
-                    .then(response => response.json())
+                fetch(`/subjects/get_criteria_points/${criteriaId}`)
+                    .then(response => {
+                        console.log("Fetch response status:", response.status);
+                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                        return response.json();
+                    })
                     .then(data => {
-                        document.getElementById('criteria_points').value = data.criterion_points || 0;
+                        console.log("Fetched data:", data);
+                        const criteriaPoints = data.criterion_points || 0;
+                        document.getElementById('criteria_points').value = criteriaPoints;
+                        console.log(`Criteria points set to: ${criteriaPoints}`);
                         calculateTotalPoints();
                     })
                     .catch(error => {
@@ -95,34 +113,47 @@
                         calculateTotalPoints();
                     });
             } else {
-                document.getElementById('criteria_points').value = '';
+                document.getElementById('criteria_points').value = 0;
+                console.log("No criteria_id selected, setting criteria_points to 0");
                 calculateTotalPoints();
             }
         }
 
         function calculateTotalPoints() {
+            console.log("calculateTotalPoints function called");
             const userId = document.getElementById('user_id').value;
             const registeredDate = document.getElementById('registered_date').value;
-            const criteriaPoints = parseInt(document.getElementById('criteria_points').value) || 0;
-            const recordId = {{ record[0] }};  // ID của bản ghi hiện tại
+            const criteriaPoints = parseFloat(document.getElementById('criteria_points').value) || 0;
+            const currentId = {{ id | default(0) | safe }};
+
+            console.log("Parameters - user_id:", userId, "registered_date:", registeredDate, "criteria_points:", criteriaPoints, "id:", currentId);
 
             if (userId && registeredDate) {
-                fetch(`/user_subjects_total_points?user_id=${userId}&registered_date=${registeredDate}&exclude_id=${recordId}`)
-                    .then(response => response.json())
+                fetch(`/subjects/user_subjects_total_points?user_id=${userId}®istered_date=${registeredDate}&exclude_id=${currentId}`)
+                    .then(response => {
+                        console.log("Fetch total points response status:", response.status);
+                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                        return response.json();
+                    })
                     .then(data => {
-                        document.getElementById('total_points').value = (data.total_points || 0) + criteriaPoints;
+                        console.log("Fetched total points data:", data);
+                        const totalPointsExcludeCurrent = data.total_points || 0;
+                        const totalPoints = totalPointsExcludeCurrent + criteriaPoints;
+                        document.getElementById('total_points').value = totalPoints;
+                        console.log(`Total points excluding current: ${totalPointsExcludeCurrent}, Final total: ${totalPoints}`);
                     })
                     .catch(error => {
-                        console.error('Error calculating total points:', error);
+                        console.error('Error fetching total points:', error);
                         document.getElementById('total_points').value = criteriaPoints;
                     });
             } else {
                 document.getElementById('total_points').value = criteriaPoints;
+                console.log("Insufficient data, setting total_points to:", criteriaPoints);
             }
         }
 
-        // Load điểm ban đầu khi trang được tải
         window.onload = function() {
+            console.log("Page loaded, calling loadCriteriaPoints");
             loadCriteriaPoints();
         };
     </script>

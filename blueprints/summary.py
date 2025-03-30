@@ -371,53 +371,57 @@ def generate_pdf_for_user(user_data, date_from, date_to, y_start, canvas_obj, pa
     page_width = 595  # Chiều rộng A4
 
     # Tiêu đề "Báo Cáo Rèn Luyện Học Sinh" căn giữa, font lớn hơn
-    canvas_obj.setFont("Arial", 18)  # Font lớn hơn (18)
+    canvas_obj.setFont("Arial", 16)  # Font lớn hơn (16)
     canvas_obj.drawCentredString(page_width / 2, y_start + 360, "Báo Cáo Rèn Luyện Học Sinh")
-
-    # Tên học sinh căn trái
-    canvas_obj.setFont("Arial", 14)  # Font tiêu đề phụ
-    canvas_obj.drawString(50, y_start + 330, f"Học Sinh: {user_data['name']}")
 
     # Khoảng thời gian căn giữa, font nhỏ hơn
     canvas_obj.setFont("Arial", 10)  # Font nhỏ hơn (10)
-    canvas_obj.drawCentredString(page_width / 2, y_start + 310, f"Từ: {date_from or '-'} ～ {date_to or '-'}")
+    canvas_obj.drawCentredString(page_width / 2, y_start + 345, f"{date_from or ' - '} đến {date_to or ' - '}")
+
+    # Tên học sinh căn trái
+    canvas_obj.setFont("Arial", 12)  # Font tiêu đề phụ
+    canvas_obj.drawString(50, y_start + 330, f"{user_data['name']}")
 
     # Dòng tiêu đề bảng
-    y = y_start + 280  # Giảm y xuống để nhường chỗ cho tiêu đề
-    canvas_obj.setFont("Arial", 12)
+    y = y_start + 300  # Giảm y xuống để nhường chỗ cho tiêu đề
+    canvas_obj.setFont("Arial", 11)
     canvas_obj.drawString(50, y, "Ngày")
-    canvas_obj.drawString(150, y, "Môn Học")
-    canvas_obj.drawString(250, y, "Học Tập")
-    canvas_obj.drawString(350, y, "Hạnh Kiểm")
-    canvas_obj.drawString(450, y, "Điểm Ngày")
+    canvas_obj.drawString(120, y, "Môn Học")
+    canvas_obj.drawString(220, y, "Học Tập")
+    canvas_obj.drawString(390, y, "Hạnh Kiểm")
+    canvas_obj.drawRightString(550, y, "Điểm Ngày")  # Căn phải tiêu đề "Điểm Ngày" sát mép phải
+    canvas_obj.setLineWidth(0.5)  # Giảm độ dày của đường kẻ xuống 0.5 (mảnh hơn)
     canvas_obj.line(50, y - 5, 550, y - 5)  # Đường kẻ ngang dưới tiêu đề
 
     # Dữ liệu
-    y -= 20
+    y -= 10  # Khoảng cách từ tiêu đề bảng đến dòng dữ liệu đầu tiên
     canvas_obj.setFont("Arial", 10)
     total_points_sum = 0
 
     # Gom nhóm theo registered_date
     for date, entries in sorted(user_data['details'].items()):  # Sắp xếp theo ngày
-        canvas_obj.drawString(50, y, str(date) if date else "-")
+        y -= 10
+        canvas_obj.drawString(50, y, str(date) if date else "")
         first_line = True
         for entry in entries:
             if not first_line:
-                y -= 15
+                y -= 10  # Khoảng cách giữa các row
                 canvas_obj.drawString(50, y, "")  # Để trống cột date cho các dòng tiếp theo
-            canvas_obj.drawString(150, y, entry.get('subject_name', '-'))
-            canvas_obj.drawString(250, y, entry.get('criteria_name', '-'))
-            canvas_obj.drawString(350, y, entry.get('conduct_name', '-'))
+            canvas_obj.drawString(120, y, entry.get('subject_name', ''))
+            canvas_obj.drawString(220, y, entry.get('criteria_name', ''))
+            canvas_obj.drawString(390, y, entry.get('conduct_name', ''))
             points = entry.get('total_points', 0)
-            canvas_obj.drawString(450, y, str(points))
+            canvas_obj.drawRightString(550, y, str(points))  # Căn phải sát mép phải của cột "Điểm Ngày"
+            canvas_obj.setLineWidth(0.05)  # Giảm độ dày của đường kẻ xuống 0.5 (mảnh hơn)
+            canvas_obj.line(50, y - 5, 550, y - 5)  # Đường kẻ ngang ngăn cách các row
             total_points_sum += points
             first_line = False
-            y -= 15
+            y -= 10  # Giảm khoảng cách giữa các row
             if y < y_start + 50:  # Nếu hết chỗ trong nửa trang A5, dừng lại
                 break
 
     # Tổng điểm
-    y -= 20
+    y -= 12
     canvas_obj.setFont("Arial", 12)
     canvas_obj.drawString(50, y, f"Tổng Điểm: {total_points_sum}")
 
@@ -506,8 +510,8 @@ def print_users():
         # Gom nhóm dữ liệu theo registered_date
         for row in us_results:
             reg_date = row[0]
-            subject_name = row[1] if row[1] else '-'
-            criteria_name = row[2] if row[2] else '-'
+            subject_name = row[1] if row[1] else ''
+            criteria_name = row[2] if row[2] else ''
             total_points = row[3] if row[3] is not None else 0
 
             if reg_date not in user_data['details']:
@@ -515,20 +519,20 @@ def print_users():
             user_data['details'][reg_date].append({
                 'subject_name': subject_name,
                 'criteria_name': criteria_name,
-                'conduct_name': '-',
+                'conduct_name': '',
                 'total_points': total_points
             })
 
         for row in uc_results:
             reg_date = row[0]
-            conduct_name = row[1] if row[1] else '-'
+            conduct_name = row[1] if row[1] else ''
             total_points = row[2] if row[2] is not None else 0
 
             if reg_date not in user_data['details']:
                 user_data['details'][reg_date] = []
             user_data['details'][reg_date].append({
-                'subject_name': '-',
-                'criteria_name': '-',
+                'subject_name': '',
+                'criteria_name': '',
                 'conduct_name': conduct_name,
                 'total_points': total_points
             })

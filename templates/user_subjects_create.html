@@ -40,7 +40,7 @@
                     </div>
                     <div class="form-group mt-3">
                         <label for="entered_by">Người đăng ký:</label>
-                        <input type="text" name="entered_by" id="entered_by" class="form-control" required>
+                        <input type="text" name="entered_by" id="entered_by" class="form-control" value="{{ current_user_name }}" required>
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
@@ -56,9 +56,19 @@
             </div>
             <div class="row mt-4">
                 <div class="col-12 text-center">
-					<button type="submit" class="btn btn-primary w-100 w-md-auto mb-2 mr-2">Tạo mới</button>
-                    <a href="{{ url_for('user_subjects.user_subjects_list') }}" class="btn btn-secondary w-100 w-md-auto mb-2 mb-md-0 mr-md-2">Quay về</a>
-                    
+                    <button type="submit" class="btn btn-primary w-100 w-md-auto mb-2 mr-2">Tạo mới</button>
+                    <a href="{{ url_for('user_subjects.user_subjects_list',
+                                        sort_by=sort_by,
+                                        sort_order=sort_order,
+                                        date_from=date_from,
+                                        date_to=date_to,
+                                        users=selected_users,
+                                        subjects=selected_subjects,
+                                        groups=selected_groups,
+                                        select_all_users=select_all_users,
+                                        select_all_subjects=select_all_subjects,
+                                        select_all_groups=select_all_groups) }}"
+                       class="btn btn-secondary w-100 w-md-auto mb-2 mb-md-0 mr-md-2">Quay về</a>
                 </div>
             </div>
         </form>
@@ -66,23 +76,31 @@
 
     <style>
         @media (max-width: 768px) {
-            .form-group {
-                margin-bottom: 1rem;
-            }
-            .btn {
-                margin-bottom: 0.5rem;
-            }
+            .form-group { margin-bottom: 1rem; }
+            .btn { margin-bottom: 0.5rem; }
         }
     </style>
 
     <script>
+        console.log("Script loaded successfully");
+
         function loadCriteriaPoints() {
+            console.log("loadCriteriaPoints function called");
             const criteriaId = document.getElementById('criteria_id').value;
+            console.log("Selected criteria_id:", criteriaId);
+
             if (criteriaId) {
-                fetch(`/get_criteria_points/${criteriaId}`)
-                    .then(response => response.json())
+                fetch(`/subjects/get_criteria_points/${criteriaId}`)
+                    .then(response => {
+                        console.log("Fetch response status:", response.status);
+                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                        return response.json();
+                    })
                     .then(data => {
-                        document.getElementById('criteria_points').value = data.criterion_points || 0;
+                        console.log("Fetched data:", data);
+                        const criteriaPoints = data.criterion_points || 0;
+                        document.getElementById('criteria_points').value = criteriaPoints;
+                        console.log(`Criteria points set to: ${criteriaPoints}`);
                         calculateTotalPoints();
                     })
                     .catch(error => {
@@ -92,28 +110,45 @@
                     });
             } else {
                 document.getElementById('criteria_points').value = '';
+                console.log("No criteria_id selected, clearing criteria_points");
                 calculateTotalPoints();
             }
         }
 
         function calculateTotalPoints() {
+            console.log("calculateTotalPoints function called");
             const userId = document.getElementById('user_id').value;
             const registeredDate = document.getElementById('registered_date').value;
-            const criteriaPoints = parseInt(document.getElementById('criteria_points').value) || 0;
+            const criteriaPoints = parseFloat(document.getElementById('criteria_points').value) || 0;
+
+            console.log("Parameters - user_id:", userId, "registered_date:", registeredDate, "criteria_points:", criteriaPoints);
 
             if (userId && registeredDate) {
-                fetch(`/user_subjects_total_points?user_id=${userId}&registered_date=${registeredDate}`)
-                    .then(response => response.json())
+                fetch(`/subjects/user_subjects_total_points?user_id=${userId}®istered_date=${registeredDate}`)
+                    .then(response => {
+                        console.log("Fetch total points response status:", response.status);
+                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                        return response.json();
+                    })
                     .then(data => {
-                        document.getElementById('total_points').value = (data.total_points || 0) + criteriaPoints;
+                        console.log("Fetched total points data:", data);
+                        const totalPoints = (data.total_points || 0) + criteriaPoints;
+                        document.getElementById('total_points').value = totalPoints;
+                        console.log(`Total points fetched: ${data.total_points}, Final total: ${totalPoints}`);
                     })
                     .catch(error => {
-                        console.error('Error calculating total points:', error);
+                        console.error('Error fetching total points:', error);
                         document.getElementById('total_points').value = criteriaPoints;
                     });
             } else {
                 document.getElementById('total_points').value = criteriaPoints;
+                console.log("Insufficient data, setting total_points to:", criteriaPoints);
             }
         }
+
+        window.onload = function() {
+            console.log("Page loaded, calling calculateTotalPoints");
+            calculateTotalPoints();
+        };
     </script>
 {% endblock %}

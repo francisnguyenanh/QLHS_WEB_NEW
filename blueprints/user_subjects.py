@@ -193,40 +193,28 @@ def user_subjects_create():
         select_all_subjects = request.args.get('select_all_subjects') == 'on'
         select_all_groups = request.args.get('select_all_groups') == 'on'
 
+        # Lấy thông tin user đang đăng nhập
+        current_user_id = session['user_id']
+        current_user = read_record_by_id('Users', current_user_id, ['id', 'name'])
+        current_user_name = current_user[1] if current_user else 'Unknown'  # Lấy tên user, mặc định là 'Unknown' nếu không tìm thấy
+
         if request.method == 'POST':
             user_id = request.form['user_id']
             subject_id = request.form['subject_id']
             criteria_id = request.form['criteria_id'] if request.form['criteria_id'] else None
             registered_date = request.form['registered_date']
-
-            conn = connect_db()
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT SUM(cr.criterion_points) 
-                FROM User_Subjects us
-                LEFT JOIN Criteria cr ON us.criteria_id = cr.id
-                WHERE us.user_id = ? AND us.registered_date = ? AND us.is_deleted = 0
-            """, (user_id, registered_date))
-            total_points = cursor.fetchone()[0] or 0
-
-            if criteria_id:
-                cursor.execute("SELECT criterion_points FROM Criteria WHERE id = ? AND is_deleted = 0", (criteria_id,))
-                criteria_points = cursor.fetchone()[0] or 0
-                total_points += criteria_points
-            else:
-                total_points = total_points or 0
+            criteria_points = float(request.form['criteria_points'])
 
             data = {
                 'user_id': user_id,
                 'subject_id': subject_id,
                 'criteria_id': criteria_id,
                 'registered_date': registered_date,
-                'total_points': total_points,
+                'total_points': criteria_points,
                 'entered_by': request.form['entered_by'],
                 'is_deleted': 0
             }
             create_record('User_Subjects', data)
-            conn.close()
 
             return redirect(url_for('user_subjects.user_subjects_list',
                                     sort_by=sort_by,
@@ -257,6 +245,7 @@ def user_subjects_create():
                                select_all_users=select_all_users,
                                select_all_subjects=select_all_subjects,
                                select_all_groups=select_all_groups,
+                               current_user_name=current_user_name,  # Truyền tên user đang đăng nhập vào template
                                is_gvcn=is_user_gvcn())
     return redirect(url_for('auth.login'))
 
@@ -279,34 +268,17 @@ def user_subjects_edit(id):
             subject_id = request.form['subject_id']
             criteria_id = request.form['criteria_id'] if request.form['criteria_id'] else None
             registered_date = request.form['registered_date']
-
-            conn = connect_db()
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT SUM(cr.criterion_points) 
-                FROM User_Subjects us
-                LEFT JOIN Criteria cr ON us.criteria_id = cr.id
-                WHERE us.user_id = ? AND us.registered_date = ? AND us.id != ? AND us.is_deleted = 0
-            """, (user_id, registered_date, id))
-            total_points = cursor.fetchone()[0] or 0
-
-            if criteria_id:
-                cursor.execute("SELECT criterion_points FROM Criteria WHERE id = ? AND is_deleted = 0", (criteria_id,))
-                criteria_points = cursor.fetchone()[0] or 0
-                total_points += criteria_points
-            else:
-                total_points = total_points or 0
+            criteria_points = float(request.form['criteria_points'])
 
             data = {
                 'user_id': user_id,
                 'subject_id': subject_id,
                 'criteria_id': criteria_id,
                 'registered_date': registered_date,
-                'total_points': total_points,
+                'total_points': criteria_points,
                 'entered_by': request.form['entered_by']
             }
             update_record('User_Subjects', id, data)
-            conn.close()
 
             return redirect(url_for('user_subjects.user_subjects_list',
                                     sort_by=sort_by,
@@ -325,7 +297,9 @@ def user_subjects_edit(id):
         users = read_all_records('Users', ['id', 'name'])
         subjects = read_all_records('Subjects', ['id', 'name'])
         criteria = read_all_records('Criteria', ['id', 'name'])
+        print(f"id: {id}")
         return render_template('user_subjects_edit.html',
+                               id=id,  # Thêm dòng này để truyền id vào template
                                record=record,
                                users=users,
                                subjects=subjects,
@@ -385,20 +359,22 @@ def user_subjects_total_points():
     registered_date = request.args.get('registered_date')
     exclude_id = request.args.get('exclude_id')
 
-    conn = connect_db()
+    conn = connect_db()  # Giả sử connect_db() là hàm kết nối database của bạn
     cursor = conn.cursor()
     query = """
-        SELECT SUM(cr.criterion_points) 
-        FROM User_Subjects us
-        LEFT JOIN Criteria cr ON us.criteria_id = cr.id
-        WHERE us.user_id = ? AND us.registered_date = ? AND us.is_deleted = 0
+        SELECT SUM(total_points) 
+        FROM User_Subjects
+        WHERE user_id = ? AND registered_date = ? AND is_deleted = 0
     """
     params = [user_id, registered_date]
 
+    print(exclude_id)
     if exclude_id:
-        query += " AND us.id != ?"
+        query += " AND id != ?"
         params.append(exclude_id)
 
+    print(query)
+    print(params)
     cursor.execute(query, params)
     total_points = cursor.fetchone()[0] or 0
     conn.close()

@@ -19,7 +19,7 @@
                         <label for="users">Học sinh:</label>
                         <select name="users" id="users" multiple class="form-control" size="4">
                             {% for user in users %}
-                                <option value="{{ user[0] }}" {% if user[0]|string in selected_users %}selected{% endif %}>{{ user[1] }}</option>
+                                <option value="{{ user[0] }}" {% if user[ researching0]|string in selected_users %}selected{% endif %}>{{ user[1] }}</option>
                             {% endfor %}
                         </select>
                         <div class="form-check mt-2">
@@ -81,7 +81,7 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th class="text-nowrap">
+                        <th classTED "text-nowrap">
                             <a href="{{ url_for('user_subjects.user_subjects_list', sort_by='subject_name', sort_order='desc' if sort_by == 'subject_name' and sort_order == 'asc' else 'asc', date_from=date_from, date_to=date_to, users=selected_users, subjects=selected_subjects, groups=selected_groups, select_all_users=select_all_users, select_all_subjects=select_all_subjects, select_all_groups=select_all_groups) }}">
                                 Môn học
                                 {% if sort_by == 'subject_name' %}
@@ -114,14 +114,6 @@
                             </a>
                         </th>
                         <th class="text-nowrap">
-                            <a href="{{ url_for('user_subjects.user_subjects_list', sort_by='total_points', sort_order='desc' if sort_by == 'total_points' and sort_order == 'asc' else 'asc', date_from=date_from, date_to=date_to, users=selected_users, subjects=selected_subjects, groups=selected_groups, select_all_users=select_all_users, select_all_subjects=select_all_subjects, select_all_groups=select_all_groups) }}">
-                                Điểm ngày
-                                {% if sort_by == 'total_points' %}
-                                    {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
-                                {% endif %}
-                            </a>
-                        </th>
-                        <th class="text-nowrap">
                             <a href="{{ url_for('user_subjects.user_subjects_list', sort_by='entered_by', sort_order='desc' if sort_by == 'entered_by' and sort_order == 'asc' else 'asc', date_from=date_from, date_to=date_to, users=selected_users, subjects=selected_subjects, groups=selected_groups, select_all_users=select_all_users, select_all_subjects=select_all_subjects, select_all_groups=select_all_groups) }}">
                                 Người đăng ký
                                 {% if sort_by == 'entered_by' %}
@@ -140,7 +132,6 @@
                             <td>{{ record[3] or 'None' }}</td>
                             <td>{{ record[7] }}</td>
                             <td>{{ record[4] }}</td>
-                            <td>{{ record[5] }}</td>
                             <td>{{ record[6] }}</td>
                             <td class="text-nowrap">
                                 <a href="{{ url_for('user_subjects.user_subjects_edit', id=record[0], sort_by=sort_by, sort_order=sort_order, date_from=date_from, date_to=date_to, users=selected_users, subjects=selected_subjects, groups=selected_groups, select_all_users=select_all_users, select_all_subjects=select_all_subjects, select_all_groups=select_all_groups) }}" class="btn btn-sm btn-info me-1">Sửa</a>

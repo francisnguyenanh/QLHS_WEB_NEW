@@ -185,36 +185,26 @@ def user_conduct_create():
         select_all_conducts = request.args.get('select_all_conducts') == 'on'
         select_all_groups = request.args.get('select_all_groups') == 'on'
 
+        # Lấy thông tin user đang đăng nhập
+        current_user_id = session['user_id']
+        current_user = read_record_by_id('Users', current_user_id, ['id', 'name'])
+        current_user_name = current_user[1] if current_user else 'Unknown'  # Lấy tên user, mặc định là 'Unknown' nếu không tìm thấy
+
         if request.method == 'POST':
             user_id = request.form['user_id']
             conduct_id = request.form['conduct_id']
             registered_date = request.form['registered_date']
-
-            conn = connect_db()
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT SUM(c.conduct_points) 
-                FROM User_Conduct uc
-                JOIN Conduct c ON uc.conduct_id = c.id
-                WHERE uc.user_id = ? AND uc.registered_date = ? AND uc.is_deleted = 0
-            """, (user_id, registered_date))
-            total_points = cursor.fetchone()[0] or 0
-
-            cursor.execute("SELECT conduct_points FROM Conduct WHERE id = ? AND is_deleted = 0", (conduct_id,))
-            conduct_points = cursor.fetchone()[0] or 0
-
-            total_points += conduct_points
+            conduct_points = float(request.form['conduct_points'])
 
             data = {
                 'user_id': user_id,
                 'conduct_id': conduct_id,
                 'registered_date': registered_date,
-                'total_points': total_points,
+                'total_points': conduct_points,
                 'entered_by': request.form['entered_by'],
                 'is_deleted': 0
             }
             create_record('User_Conduct', data)
-            conn.close()
 
             return redirect(url_for('user_conduct.user_conduct_list',
                                     sort_by=sort_by,
@@ -243,6 +233,7 @@ def user_conduct_create():
                                select_all_users=select_all_users,
                                select_all_conducts=select_all_conducts,
                                select_all_groups=select_all_groups,
+                               current_user_name=current_user_name,  # Truyền tên user đang đăng nhập vào template
                                is_gvcn=is_user_gvcn())
     return redirect(url_for('auth.login'))
 
@@ -264,31 +255,16 @@ def user_conduct_edit(id):
             user_id = request.form['user_id']
             conduct_id = request.form['conduct_id']
             registered_date = request.form['registered_date']
-
-            conn = connect_db()
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT SUM(c.conduct_points) 
-                FROM User_Conduct uc
-                JOIN Conduct c ON uc.conduct_id = c.id
-                WHERE uc.user_id = ? AND uc.registered_date = ? AND uc.id != ? AND uc.is_deleted = 0
-            """, (user_id, registered_date, id))
-            total_points = cursor.fetchone()[0] or 0
-
-            cursor.execute("SELECT conduct_points FROM Conduct WHERE id = ? AND is_deleted = 0", (conduct_id,))
-            conduct_points = cursor.fetchone()[0] or 0
-
-            total_points += conduct_points
+            conduct_points = float(request.form['conduct_points'])  # Lấy giá trị từ ô Điểm hạnh kiểm
 
             data = {
                 'user_id': user_id,
                 'conduct_id': conduct_id,
                 'registered_date': registered_date,
-                'total_points': total_points,
+                'total_points': conduct_points,  # Lưu conduct_points vào total_points của bản ghi
                 'entered_by': request.form['entered_by']
             }
             update_record('User_Conduct', id, data)
-            conn.close()
 
             return redirect(url_for('user_conduct.user_conduct_list',
                                     sort_by=sort_by,
@@ -307,6 +283,7 @@ def user_conduct_edit(id):
         users = read_all_records('Users', ['id', 'name'])
         conducts = read_all_records('Conduct', ['id', 'name'])
         return render_template('user_conduct_edit.html',
+                               id=id,  # Truyền id vào template
                                record=record,
                                users=users,
                                conducts=conducts,
@@ -368,15 +345,14 @@ def user_conduct_total_points():
     conn = connect_db()
     cursor = conn.cursor()
     query = """
-        SELECT SUM(c.conduct_points) 
-        FROM User_Conduct uc
-        JOIN Conduct c ON uc.conduct_id = c.id
-        WHERE uc.user_id = ? AND uc.registered_date = ? AND uc.is_deleted = 0
+        SELECT SUM(total_points) 
+        FROM User_Conduct
+        WHERE user_id = ? AND registered_date = ? AND is_deleted = 0
     """
     params = [user_id, registered_date]
 
     if exclude_id:
-        query += " AND uc.id != ?"
+        query += " AND id != ?"
         params.append(exclude_id)
 
     cursor.execute(query, params)
