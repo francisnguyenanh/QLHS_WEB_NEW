@@ -18,3 +18,4 @@ app.register_blueprint(summary_bp, url_prefix='/summary')
 
 if __name__ == '__main__':
     app.run(debug=True)
+    app.run(debug=True)

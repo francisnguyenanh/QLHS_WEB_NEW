@@ -17,7 +17,7 @@
                 <div class="col-12 col-md-3">
                     <div class="form-group">
                         <label for="users">Học sinh:</label>
-                        <select name="users" id="users" multiple class="form-control" size="4">
+                        <select name="users" id="users" multiple class="form-control select2-users">
                             {% for user in users %}
                                 <option value="{{ user[0] }}" {% if user[0]|string in selected_users %}selected{% endif %}>{{ user[1] }}</option>
                             {% endfor %}
@@ -31,7 +31,7 @@
                 <div class="col-12 col-md-3">
                     <div class="form-group">
                         <label for="groups">Nhóm:</label>
-                        <select name="groups" id="groups" multiple class="form-control" size="4">
+                        <select name="groups" id="groups" multiple class="form-control select2-groups">
                             {% for group in groups %}
                                 <option value="{{ group[0] }}" {% if group[0]|string in selected_groups %}selected{% endif %}>{{ group[1] }}</option>
                             {% endfor %}
@@ -45,7 +45,7 @@
                 <div class="col-12 col-md-3">
                     <div class="form-group">
                         <label for="conducts">Hạnh kiểm:</label>
-                        <select name="conducts" id="conducts" multiple class="form-control" size="4">
+                        <select name="conducts" id="conducts" multiple class="form-control select2-conducts">
                             {% for conduct in conducts %}
                                 <option value="{{ conduct[0] }}" {% if conduct[0]|string in selected_conducts %}selected{% endif %}>{{ conduct[1] }}</option>
                             {% endfor %}
@@ -135,25 +135,95 @@
         </div>
     </div>
 
+    <!-- Thêm jQuery và Select2 trực tiếp -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
+        jQuery(document).ready(function($) {
+            if (typeof $.fn.select2 === 'undefined') {
+                console.error('Select2 is not loaded!');
+            } else {
+                console.log('Select2 is loaded, initializing...');
+                // Khởi tạo Select2 cho Học sinh
+                $('#users').select2({
+                    placeholder: "Nhập tên học sinh để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+                // Khởi tạo Select2 cho Nhóm
+                $('#groups').select2({
+                    placeholder: "Nhập tên nhóm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+                // Khởi tạo Select2 cho Hạnh kiểm
+                $('#conducts').select2({
+                    placeholder: "Nhập hạnh kiểm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        // Xử lý checkbox "Chọn tất cả" cho Học sinh
         document.getElementById('select_all_users').addEventListener('change', function() {
-            const userSelect = document.getElementById('users');
-            for (let option of userSelect.options) {
-                option.selected = this.checked;
+            const $userSelect = jQuery('#users');
+            if (this.checked) {
+                $userSelect.select2('destroy').find('option').prop('selected', true);
+                $userSelect.select2({
+                    placeholder: "Nhập tên học sinh để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                $userSelect.select2('destroy').find('option').prop('selected', false);
+                $userSelect.select2({
+                    placeholder: "Nhập tên học sinh để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
             }
         });
 
-        document.getElementById('select_all_conducts').addEventListener('change', function() {
-            const conductSelect = document.getElementById('conducts');
-            for (let option of conductSelect.options) {
-                option.selected = this.checked;
-            }
-        });
-
+        // Xử lý checkbox "Chọn tất cả" cho Nhóm
         document.getElementById('select_all_groups').addEventListener('change', function() {
-            const groupSelect = document.getElementById('groups');
-            for (let option of groupSelect.options) {
-                option.selected = this.checked;
+            const $groupSelect = jQuery('#groups');
+            if (this.checked) {
+                $groupSelect.select2('destroy').find('option').prop('selected', true);
+                $groupSelect.select2({
+                    placeholder: "Nhập tên nhóm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                $groupSelect.select2('destroy').find('option').prop('selected', false);
+                $groupSelect.select2({
+                    placeholder: "Nhập tên nhóm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        // Xử lý checkbox "Chọn tất cả" cho Hạnh kiểm
+        document.getElementById('select_all_conducts').addEventListener('change', function() {
+            const $conductSelect = jQuery('#conducts');
+            if (this.checked) {
+                $conductSelect.select2('destroy').find('option').prop('selected', true);
+                $conductSelect.select2({
+                    placeholder: "Nhập hạnh kiểm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                $conductSelect.select2('destroy').find('option').prop('selected', false);
+                $conductSelect.select2({
+                    placeholder: "Nhập hạnh kiểm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
             }
         });
     </script>
@@ -163,19 +233,12 @@
             .form-group {
                 margin-bottom: 1rem;
             }
-
-            select[multiple] {
-                height: auto !important;
-            }
-
             .btn {
                 margin-bottom: 0.5rem;
             }
-
             .table {
                 font-size: 0.7rem;
             }
-
             th, td {
                 padding: 0.5rem !important;
             }

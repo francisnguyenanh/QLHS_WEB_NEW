@@ -6,8 +6,8 @@
             <div class="row g-3">
                 <div class="col-12 col-md-4">
                     <div class="form-group">
-                        <label for="user_id">Học sinh:</label>
-                        <select name="user_id" id="user_id" class="form-control" required onchange="calculateTotalPoints()">
+                        <label for="user_id">Họ tên:</label>
+                        <select name="user_id" id="user_id" class="form-control select2-users" required onchange="calculateTotalPoints()">
                             {% for user in users %}
                                 <option value="{{ user[0] }}" {% if user[0] == record[1] %}selected{% endif %}>
                                     {{ user[1] }}
@@ -16,8 +16,8 @@
                         </select>
                     </div>
                     <div class="form-group mt-3">
-                        <label for="subject_id">Subject:</label>
-                        <select name="subject_id" id="subject_id" class="form-control" required>
+                        <label for="subject_id">Môn học:</label>
+                        <select name="subject_id" id="subject_id" class="form-control select2-subjects" required>
                             {% for subject in subjects %}
                                 <option value="{{ subject[0] }}" {% if subject[0] == record[2] %}selected{% endif %}>
                                     {{ subject[1] }}
@@ -27,8 +27,8 @@
                     </div>
                     <div class="form-group mt-3">
                         <label for="criteria_id">Kết quả:</label>
-                        <select name="criteria_id" id="criteria_id" class="form-control" onchange="loadCriteriaPoints()">
-                            <option value="">Select Criteria (Optional)</option>
+                        <select name="criteria_id" id="criteria_id" class="form-control select2-criteria" onchange="loadCriteriaPoints()">
+                            <option value="">Chọn kết quả (Tùy chọn)</option>
                             {% for criterion in criteria %}
                                 <option value="{{ criterion[0] }}" {% if criterion[0] == record[3] %}selected{% endif %}>
                                     {{ criterion[1] }}
@@ -78,14 +78,38 @@
         </form>
     </div>
 
-    <style>
-        @media (max-width: 768px) {
-            .form-group { margin-bottom: 1rem; }
-            .btn { margin-bottom: 0.5rem; }
-        }
-    </style>
+    <!-- Thêm jQuery và Select2 trực tiếp -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
+        jQuery(document).ready(function($) {
+            if (typeof $.fn.select2 === 'undefined') {
+                console.error('Select2 is not loaded!');
+            } else {
+                console.log('Select2 is loaded, initializing...');
+                // Khởi tạo Select2 cho Họ tên
+                $('#user_id').select2({
+                    placeholder: "Chọn hoặc nhập tên học sinh...",
+                    allowClear: true,
+                    width: '100%'
+                });
+                // Khởi tạo Select2 cho Môn học
+                $('#subject_id').select2({
+                    placeholder: "Chọn hoặc nhập môn học...",
+                    allowClear: true,
+                    width: '100%'
+                });
+                // Khởi tạo Select2 cho Kết quả
+                $('#criteria_id').select2({
+                    placeholder: "Chọn hoặc nhập kết quả...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
         console.log("Script loaded successfully");
 
         function loadCriteriaPoints() {
@@ -157,4 +181,11 @@
             loadCriteriaPoints();
         };
     </script>
+
+    <style>
+        @media (max-width: 768px) {
+            .form-group { margin-bottom: 1rem; }
+            .btn { margin-bottom: 0.5rem; }
+        }
+    </style>
 {% endblock %}

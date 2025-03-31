@@ -12,6 +12,34 @@ def is_user_gvcn():
         return role and role[1] == 'GVCN'
     return False
 
+def get_users_excluding_gvcn():
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        # Lấy ID của vai trò GVCN
+        cursor.execute("SELECT id FROM Roles WHERE name = 'GVCN'")
+        role_result = cursor.fetchone()
+        gvcn_role_id = role_result[0] if role_result else None
+
+        # Lấy danh sách người dùng dựa trên vai trò GVCN
+        if gvcn_role_id is not None:
+            cursor.execute("SELECT id, name FROM Users WHERE is_deleted = 0 AND role_id != ?", (gvcn_role_id,))
+        else:
+            cursor.execute("SELECT id, name FROM Users WHERE is_deleted = 0")
+
+        users = cursor.fetchall()
+        return users
+
+    except Exception as e:
+        print(f"Lỗi khi lấy danh sách người học sinh: {e}")
+        return None  # Trả về None nếu có lỗi
+
+    finally:
+        # Không đóng kết nối ở đây, để hàm gọi quyết định.
+        pass
+
+
 @user_conduct_bp.route('/user_conduct', methods=['GET', 'POST'])
 def user_conduct_list():
     if 'user_id' in session:
@@ -39,13 +67,10 @@ def user_conduct_list():
         teacher_group_id = group_result[0] if group_result else None
         conn.close()
 
+        users = get_users_excluding_gvcn()
+
         conn = connect_db()
         cursor = conn.cursor()
-        if gvcn_role_id is not None:
-            cursor.execute("SELECT id, name FROM Users WHERE is_deleted = 0 AND role_id != ?", (gvcn_role_id,))
-        else:
-            cursor.execute("SELECT id, name FROM Users WHERE is_deleted = 0")
-        users = cursor.fetchall()
         cursor.execute("SELECT id, name FROM Conduct WHERE is_deleted = 0")
         conducts = cursor.fetchall()
         if teacher_group_id is not None:
@@ -218,8 +243,14 @@ def user_conduct_create():
                                     select_all_conducts=select_all_conducts,
                                     select_all_groups=select_all_groups))
 
-        users = read_all_records('Users', ['id', 'name'])
-        conducts = read_all_records('Conduct', ['id', 'name'])
+        users = get_users_excluding_gvcn()
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name FROM Conduct WHERE is_deleted = 0")
+        conducts = cursor.fetchall()
+        conn.close()
+
         return render_template('user_conduct_create.html',
                                users=users,
                                conducts=conducts,
@@ -280,8 +311,15 @@ def user_conduct_edit(id):
 
         record = read_record_by_id('User_Conduct', id,
                                    ['id', 'user_id', 'conduct_id', 'registered_date', 'total_points', 'entered_by'])
-        users = read_all_records('Users', ['id', 'name'])
-        conducts = read_all_records('Conduct', ['id', 'name'])
+
+        users = get_users_excluding_gvcn()
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name FROM Conduct WHERE is_deleted = 0")
+        conducts = cursor.fetchall()
+        conn.close()
+
         return render_template('user_conduct_edit.html',
                                id=id,  # Truyền id vào template
                                record=record,

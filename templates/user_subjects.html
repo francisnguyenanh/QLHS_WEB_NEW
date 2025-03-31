@@ -17,9 +17,9 @@
                 <div class="col-12 col-md-3">
                     <div class="form-group">
                         <label for="users">Học sinh:</label>
-                        <select name="users" id="users" multiple class="form-control" size="4">
+                        <select name="users" id="users" multiple class="form-control select2-users">
                             {% for user in users %}
-                                <option value="{{ user[0] }}" {% if user[ researching0]|string in selected_users %}selected{% endif %}>{{ user[1] }}</option>
+                                <option value="{{ user[0] }}" {% if user[0]|string in selected_users %}selected{% endif %}>{{ user[1] }}</option>
                             {% endfor %}
                         </select>
                         <div class="form-check mt-2">
@@ -31,7 +31,7 @@
                 <div class="col-12 col-md-3">
                     <div class="form-group">
                         <label for="groups">Nhóm:</label>
-                        <select name="groups" id="groups" multiple class="form-control" size="4">
+                        <select name="groups" id="groups" multiple class="form-control select2-groups">
                             {% for group in groups %}
                                 <option value="{{ group[0] }}" {% if group[0]|string in selected_groups %}selected{% endif %}>{{ group[1] }}</option>
                             {% endfor %}
@@ -45,7 +45,7 @@
                 <div class="col-12 col-md-3">
                     <div class="form-group">
                         <label for="subjects">Môn học:</label>
-                        <select name="subjects" id="subjects" multiple class="form-control" size="4">
+                        <select name="subjects" id="subjects" multiple class="form-control select2-subjects">
                             {% for subject in subjects %}
                                 <option value="{{ subject[0] }}" {% if subject[0]|string in selected_subjects %}selected{% endif %}>{{ subject[1] }}</option>
                             {% endfor %}
@@ -81,7 +81,7 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th classTED "text-nowrap">
+                        <th class="text-nowrap">
                             <a href="{{ url_for('user_subjects.user_subjects_list', sort_by='subject_name', sort_order='desc' if sort_by == 'subject_name' and sort_order == 'asc' else 'asc', date_from=date_from, date_to=date_to, users=selected_users, subjects=selected_subjects, groups=selected_groups, select_all_users=select_all_users, select_all_subjects=select_all_subjects, select_all_groups=select_all_groups) }}">
                                 Môn học
                                 {% if sort_by == 'subject_name' %}
@@ -144,25 +144,95 @@
         </div>
     </div>
 
+    <!-- Thêm jQuery và Select2 trực tiếp -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
+        jQuery(document).ready(function($) {
+            if (typeof $.fn.select2 === 'undefined') {
+                console.error('Select2 is not loaded!');
+            } else {
+                console.log('Select2 is loaded, initializing...');
+                // Khởi tạo Select2 cho Học sinh
+                $('#users').select2({
+                    placeholder: "Nhập tên học sinh để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+                // Khởi tạo Select2 cho Nhóm
+                $('#groups').select2({
+                    placeholder: "Nhập tên nhóm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+                // Khởi tạo Select2 cho Môn học
+                $('#subjects').select2({
+                    placeholder: "Nhập môn học để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        // Xử lý checkbox "Chọn tất cả" cho Học sinh
         document.getElementById('select_all_users').addEventListener('change', function() {
-            const userSelect = document.getElementById('users');
-            for (let option of userSelect.options) {
-                option.selected = this.checked;
+            const $userSelect = jQuery('#users');
+            if (this.checked) {
+                $userSelect.select2('destroy').find('option').prop('selected', true);
+                $userSelect.select2({
+                    placeholder: "Nhập tên học sinh để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                $userSelect.select2('destroy').find('option').prop('selected', false);
+                $userSelect.select2({
+                    placeholder: "Nhập tên học sinh để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
             }
         });
 
-        document.getElementById('select_all_subjects').addEventListener('change', function() {
-            const subjectSelect = document.getElementById('subjects');
-            for (let option of subjectSelect.options) {
-                option.selected = this.checked;
-            }
-        });
-
+        // Xử lý checkbox "Chọn tất cả" cho Nhóm
         document.getElementById('select_all_groups').addEventListener('change', function() {
-            const groupSelect = document.getElementById('groups');
-            for (let option of groupSelect.options) {
-                option.selected = this.checked;
+            const $groupSelect = jQuery('#groups');
+            if (this.checked) {
+                $groupSelect.select2('destroy').find('option').prop('selected', true);
+                $groupSelect.select2({
+                    placeholder: "Nhập tên nhóm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                $groupSelect.select2('destroy').find('option').prop('selected', false);
+                $groupSelect.select2({
+                    placeholder: "Nhập tên nhóm để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        // Xử lý checkbox "Chọn tất cả" cho Môn học
+        document.getElementById('select_all_subjects').addEventListener('change', function() {
+            const $subjectSelect = jQuery('#subjects');
+            if (this.checked) {
+                $subjectSelect.select2('destroy').find('option').prop('selected', true);
+                $subjectSelect.select2({
+                    placeholder: "Nhập môn học để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                $subjectSelect.select2('destroy').find('option').prop('selected', false);
+                $subjectSelect.select2({
+                    placeholder: "Nhập môn học để tìm kiếm...",
+                    allowClear: true,
+                    width: '100%'
+                });
             }
         });
     </script>
